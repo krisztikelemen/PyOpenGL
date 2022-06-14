@@ -9,6 +9,7 @@ import pyrr
 
 class Planet:
 	def __init__(self, name, radius, distance):
+		self.name = name
 		self.radius = radius
 		self.distance = distance
 		self.vertSlices = 50
@@ -52,11 +53,19 @@ class Planet:
 		materialSpecularColor_loc = glGetUniformLocation(self.shader, "materialSpecularColor")
 		materialEmissionColor_loc = glGetUniformLocation(self.shader, "materialEmissionColor")
 		materialShine_loc = glGetUniformLocation(self.shader, "materialShine")
-		glUniform3f(materialAmbientColor_loc, 0.25, 0.25, 0.25)
-		glUniform3f(materialDiffuseColor_loc, 0.4, 0.4, 0.4)
-		glUniform3f(materialSpecularColor_loc, 0.774597, 0.774597, 0.774597)
-		glUniform3f(materialEmissionColor_loc, 0.0, 0.0, 0.0)
-		glUniform1f(materialShine_loc, 76.8)
+
+		if self.name == "sun":
+			glUniform3f(materialAmbientColor_loc, 0.4, 0.4, 0.4)
+			glUniform3f(materialDiffuseColor_loc, 0.1, 0.1, 0.1)
+			glUniform3f(materialSpecularColor_loc, 0.2, 0.2, 0.2)
+			glUniform3f(materialEmissionColor_loc, 0.2, 0.2, 0.2)
+			glUniform1f(materialShine_loc, 76.8)
+		else:
+			glUniform3f(materialAmbientColor_loc, 0.2, 0.2, 0.2)
+			glUniform3f(materialDiffuseColor_loc, 0.5, 0.5, 0.5)
+			glUniform3f(materialSpecularColor_loc, 0.0, 0.0, 0.0)
+			glUniform3f(materialEmissionColor_loc, 0.0, 0.0, 0.0)
+			glUniform1f(materialShine_loc, 76.8)
 
 		lightAmbientColor_loc = glGetUniformLocation(self.shader, "lightAmbientColor")
 		lightDiffuseColor_loc = glGetUniformLocation(self.shader, "lightDiffuseColor")
