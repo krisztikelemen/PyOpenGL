@@ -4,8 +4,9 @@ from OpenGL.GLU import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from engine.SkyBox import SkyBox
 from engine.Camera import Camera
+from engine.Texture import Texture
 from Planet import Planet
-from enum import Enum
+import numpy
 import pyrr
 import os
 
@@ -46,6 +47,55 @@ glfw.set_cursor_pos_callback(window, cursorCallback)
 glfw.make_context_current(window)
 glEnable(GL_DEPTH_TEST)
 glViewport(0, 0, 1280, 720)
+
+### Framebuffer
+frameBuffer = glGenFramebuffers(1)
+glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer)
+
+texture = glGenTextures(1)
+glBindTexture(GL_TEXTURE_2D, texture)
+
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1280, 720, 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(0))
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR )
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+glBindTexture(GL_TEXTURE_2D, 0)
+
+glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0)
+
+rbo = glGenRenderbuffers(1)
+glBindRenderbuffer(GL_RENDERBUFFER, rbo)
+glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1280, 720) 
+glBindRenderbuffer(GL_RENDERBUFFER, 0)
+
+glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo)
+
+glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+with open("./shaders/screen.vert") as f:
+	vertex_shader = f.read()
+
+with open("./shaders/screen.frag") as f:
+	fragment_shader = f.read()
+
+screen_shader = compileProgram(
+	compileShader(vertex_shader, GL_VERTEX_SHADER),
+    compileShader(fragment_shader, GL_FRAGMENT_SHADER)
+)
+
+glUseProgram(0)
+
+vertices = [
+	-1,  1, 0, 0,
+	 1,  1, 1, 0,
+	 1, -1, 1, 1,
+	-1, -1, 0, 1
+]
+
+vertices = numpy.array(vertices, dtype=numpy.float32)
+screen = glGenBuffers(1)
+glBindBuffer(GL_ARRAY_BUFFER, screen)
+glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
+glBindBuffer(GL_ARRAY_BUFFER, 0)
 
 camera = Camera(0, 10, 70)
 
@@ -126,10 +176,11 @@ for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptun
 	planet.setLightPos(lightX, lightY, lightZ)
 
 viewMat = pyrr.matrix44.create_look_at([0.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0])
-elapsedTime = 0
+screenTexture = Texture("./assets/screen.jpg")
+startTime = 0
 
 while not glfw.window_should_close(window) and not exitProgram:
-	startTime = glfw.get_time()
+	# startTime = glfw.get_time()
 	glfw.poll_events()
 
 	if glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
@@ -172,14 +223,39 @@ while not glfw.window_should_close(window) and not exitProgram:
 		neptune.rotation += 15.0
 		neptune.revolution += 0.0006
 
-	glUseProgram(shader)
-	glUniform3f(viewPos_loc, camera.x, camera.y, camera.z )	
+		glUseProgram(shader)
+		glUniform3f(viewPos_loc, camera.x, camera.y, camera.z )	
+		skyBox.activateCubeMap(shader, 1)
+	else:
+		glClearDepth(1.0)
+		glClearColor(0, 0, 0, 1)
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
+		glDisable(GL_DEPTH_TEST)
 
-	skyBox.activateCubeMap(shader, 1)
-	
+		glUseProgram(screen_shader)
+
+		Texture.enableTexturing()
+		screenTexture.activate()
+
+		glBindBuffer(GL_ARRAY_BUFFER, screen)
+        
+		position_loc = glGetAttribLocation(screen_shader, 'in_position')
+		glEnableVertexAttribArray(position_loc)
+		glVertexAttribPointer(position_loc, 2, GL_FLOAT, False, vertices.itemsize * 4, ctypes.c_void_p(0))
+
+		texture_loc = glGetAttribLocation(screen_shader, 'in_texCoord')
+		glEnableVertexAttribArray(texture_loc)
+		glVertexAttribPointer(texture_loc, 2, GL_FLOAT, False, vertices.itemsize * 4, ctypes.c_void_p(8))
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0)	
+		glDrawArrays(GL_QUADS, 0, 4)
+
 	glfw.swap_buffers(window)
 	
 	endTime = glfw.get_time()
 	elapsedTime = endTime - startTime
+
+	if elapsedTime > 36:
+		exitProgram = True
 
 glfw.terminate()
