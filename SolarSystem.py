@@ -207,17 +207,14 @@ while not glfw.window_should_close(window) and not exitProgram:
 	glClearDepth(1.0)
 	glClearColor(0, 0.1, 0.1, 1)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
+	glEnable(GL_DEPTH_TEST)
 
 	skyBox.render(perspMat, camera.getMatrixForCubemap())
 
-	# for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]:
-	# 	planet.render(camera, perspMat)
+	for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]:
+		planet.render(camera, perspMat)
 
 	if earth.revolution <= 360:
-
-		for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]:
-			planet.render(camera, perspMat)
-
 		mercury.rotation += 0.17
 		mercury.revolution += 0.4
 		venus.rotation += 0.09
@@ -261,14 +258,15 @@ while not glfw.window_should_close(window) and not exitProgram:
 		endTime = glfw.get_time()
 		elapsedTime = endTime - startTime
 
-		if elapsedTime > 35:
-			for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]:
-				planet.revolution = 0.0
-				planet. rotation = 0.0
-
+		if elapsedTime > 36:
+			earth.revolution = 0.0
+		
 	glUseProgram(shader)
 	glUniform3f(viewPos_loc, camera.x, camera.y, camera.z )	
 	skyBox.activateCubeMap(shader, 1)
+
+	endTime = glfw.get_time()
+	elapsedTime = endTime - startTime
 
 	glfw.swap_buffers(window)
 

@@ -109,7 +109,7 @@ class Planet:
 		# worldMat = pyrr.matrix44.multiply(rotMat, transMat)
 		# glUniformMatrix4fv(world_loc, 1, GL_FALSE, worldMat)
 
-		transMat = pyrr.matrix44.create_from_translation(pyrr.Vector3([0, 0, 0]))
+		transMat = pyrr.matrix44.create_identity()
 		rotMat = pyrr.matrix44.create_from_y_rotation(math.radians(self.revolution))
 		worldMat = pyrr.matrix44.multiply(rotMat, transMat)
 		glUniformMatrix4fv(world_loc, 1, GL_FALSE, worldMat)
