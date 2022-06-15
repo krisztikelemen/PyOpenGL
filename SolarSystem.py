@@ -178,6 +178,7 @@ for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptun
 viewMat = pyrr.matrix44.create_look_at([0.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0])
 screenTexture = Texture("./assets/screen.jpg")
 startTime = 0
+speed = 1000.0
 
 while not glfw.window_should_close(window) and not exitProgram:
 	# startTime = glfw.get_time()
@@ -188,13 +189,20 @@ while not glfw.window_should_close(window) and not exitProgram:
 
 	directionTry = 0
 	directionReal = 0
+
 	if glfw.get_key(window, glfw.KEY_S) == glfw.PRESS:
 		directionTry = -30*elapsedTime
 		directionReal = -15*elapsedTime
 	if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS:
 		directionTry = 30*elapsedTime
 		directionReal = 15*elapsedTime
-	camera.move(directionTry)
+	if glfw.get_key(window, glfw.KEY_A) == glfw.PRESS:
+		if speed > 500.0:
+			speed -= 100.0
+	if glfw.get_key(window, glfw.KEY_D) == glfw.PRESS:
+		if speed < 1500.0:
+			speed += 100.0
+	camera.move(directionTry/speed)
 
 	glClearDepth(1.0)
 	glClearColor(0, 0.1, 0.1, 1)
@@ -202,10 +210,14 @@ while not glfw.window_should_close(window) and not exitProgram:
 
 	skyBox.render(perspMat, camera.getMatrixForCubemap())
 
-	for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]:
-		planet.render(camera, perspMat)
+	# for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]:
+	# 	planet.render(camera, perspMat)
 
 	if earth.revolution <= 360:
+
+		for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]:
+			planet.render(camera, perspMat)
+
 		mercury.rotation += 0.17
 		mercury.revolution += 0.4
 		venus.rotation += 0.09
@@ -222,10 +234,6 @@ while not glfw.window_should_close(window) and not exitProgram:
 		uranus.revolution += 0.001
 		neptune.rotation += 15.0
 		neptune.revolution += 0.0006
-
-		glUseProgram(shader)
-		glUniform3f(viewPos_loc, camera.x, camera.y, camera.z )	
-		skyBox.activateCubeMap(shader, 1)
 	else:
 		glClearDepth(1.0)
 		glClearColor(0, 0, 0, 1)
@@ -250,12 +258,18 @@ while not glfw.window_should_close(window) and not exitProgram:
 		glBindBuffer(GL_ARRAY_BUFFER, 0)	
 		glDrawArrays(GL_QUADS, 0, 4)
 
-	glfw.swap_buffers(window)
-	
-	endTime = glfw.get_time()
-	elapsedTime = endTime - startTime
+		endTime = glfw.get_time()
+		elapsedTime = endTime - startTime
 
-	if elapsedTime > 36:
-		exitProgram = True
+		if elapsedTime > 35:
+			for planet in [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]:
+				planet.revolution = 0.0
+				planet. rotation = 0.0
+
+	glUseProgram(shader)
+	glUniform3f(viewPos_loc, camera.x, camera.y, camera.z )	
+	skyBox.activateCubeMap(shader, 1)
+
+	glfw.swap_buffers(window)
 
 glfw.terminate()

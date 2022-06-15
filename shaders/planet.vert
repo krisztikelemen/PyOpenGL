@@ -22,6 +22,6 @@ void main() {
    gl_Position = projection * view * world * vec4((in_position), 1.0);
    // vilag koordinatarendszer:
    v_position = (world * vec4(in_position, 1.0)).xyz;
-   v_normal = mat3(transpose(inverse( view * world ))) * in_normal; 
+   v_normal = mat3(transpose(inverse(world))) * in_normal; 
    v_texture = in_texture; 
 }
